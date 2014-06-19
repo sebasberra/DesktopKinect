@@ -981,6 +981,17 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
     // check de que lado de la mitad de esta
     int res=pseudox+scWidthMitad;
     
+    // check dentro de las dimensiones de la pantalla PC
+    if (res<0){
+    
+      res=0;
+    }
+    
+    if (res>=scWidth){
+      
+      res=scWidth-1;
+      
+    }
     
     return res;
     
@@ -1013,6 +1024,17 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
     // check de que lado de la mitad de esta
     int res=pseudoy+scHeightMitad;
     
+    // check dentro de las dimensiones de la pantalla PC
+    if (res<0){
+    
+      res=0;
+    }
+    
+    if (res>=scHeight){
+      
+      res=scHeight-1;
+      
+    }
     
     return res;
     
