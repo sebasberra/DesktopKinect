@@ -36,12 +36,17 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
 
   private static final int ZTOL = 150;
   
+  private static final double RESCALE = 1.5;
+  
   // image vars
   private BufferedImage image = null;
   private int imWidth, imHeight;
 
   private int scWidth, scHeight;
-  private float escalaX, escalaY;
+  private int imWidthMitad,imHeightMitad;
+  private int scWidthMitad,scHeightMitad;
+    
+  private double pseudoScWidthMitad,pseudoScHeightMitad;
   
   private volatile boolean isRunning;
 
@@ -348,7 +353,7 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
       waveDetector = new WaveDetector();
 
       // some wave settings; change with set
-      waveDetector.setFlipCount(3);
+      waveDetector.setFlipCount(2);
       int flipCount = waveDetector.getFlipCount();
       int flipLen = waveDetector.getMinLength();
       System.out.println(
@@ -405,13 +410,13 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
       // settings; se cambia con set
       
       // minimum velocity in the time span to define as push, in m/s
-      float minVel = pushDetector.getPushImmediateMinimumVelocity();
+      double minVel = pushDetector.getPushImmediateMinimumVelocity();
             
       // time used to detect push, in ms
-      float duration = pushDetector.getPushImmediateDuration();
+      double duration = pushDetector.getPushImmediateDuration();
             
       // max angle between immediate direction and  Z-axis, in degrees
-      float angleZ = pushDetector.getPushMaximumAngleBetweenImmediateAndZ();
+      double angleZ = pushDetector.getPushMaximumAngleBetweenImmediateAndZ();
            
       // muestra la configuracion del push
       System.out.printf("Push settings -- min velocidad: %.1f m/s; min duracion: %.1f ms; max angulo eje-z: %.1f grados \n",
@@ -541,7 +546,10 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
 	      // xbmc
 	      case 3:
 	      
+		System.out.println("XBMC tecla enviada: Left");
+		XDoTool.key(id_ventana,"Left");
 		break;
+	      
 		
 	      // libreoffice
 	      case 4:
@@ -591,6 +599,8 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
 	      // xbmc
 	      case 3:
 	      
+		System.out.println("XBMC tecla enviada: Right");
+		XDoTool.key(id_ventana,"Right");
 		break;
 		
 	      // libreoffice
@@ -644,8 +654,8 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
 	      // xbmc
 	      case 3:
 	      
-		// rueda mouse arriba                              
-		XDoTool.clickXDoTool(id_ventana,"4");
+		System.out.println("XBMC tecla enviada: P");
+		XDoTool.key(id_ventana,"P");
 		break;
 		
 	      // libreoffice
@@ -701,9 +711,8 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
 	      // xbmc
 	      case 3:
 	      
-		// rueda mouse abajo                              
-		System.out.println("xbmc tecla enviada: Down");
-		XDoTool.clickXDoTool(id_ventana,"5");
+		System.out.println("XBMC tecla enviada: Space");
+		XDoTool.key(id_ventana,"Space");
 		break;
 		
 	      // libreoffice
@@ -959,11 +968,22 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
   */
   private int escalarX(int x){
   
-    int res;
     
-    res = (int)(escalaX*(float)x);
+    // pseudo re escalado
+    double pseudoEscala =  pseudoScWidthMitad / (double)imWidthMitad;
+    
+    // resta a x(kinect) la mitad del ancho de pantalla kinect
+    int xaux = x-imWidthMitad;
+    
+    // aplica pseudo escala
+    int pseudox = (int)(pseudoEscala*(double)xaux);
+    
+    // check de que lado de la mitad de esta
+    int res=pseudox+scWidthMitad;
+    
     
     return res;
+    
   }
   
   
@@ -974,11 +994,28 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
   */
   private int escalarY(int y){
   
-    int res;
+    //int res = (int)(escalaY*(float)y);
     
-    res = (int)(escalaY*(float)y);
+    
+    // mitad de visor kinect y de screen
+    int imHeightMitad = (int)imHeight/2;
+    int scHeightMitad = (int)scHeight/2;
+    
+    // pseudo re escalado
+    double pseudoEscala =  pseudoScHeightMitad / (double)imHeightMitad;
+    
+    // resta a y(kinect) la mitad del ancho de pantalla kinect
+    int yaux = y-imHeightMitad;
+    
+    // aplica pseudo escala
+    int pseudoy = (int)(pseudoEscala*(double)yaux);
+    
+    // check de que lado de la mitad de esta
+    int res=pseudoy+scHeightMitad;
+    
     
     return res;
+    
   }
   
   
@@ -1104,9 +1141,15 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
     scWidth = gd.getDisplayMode().getWidth();
     scHeight = gd.getDisplayMode().getHeight();
     
-    // escalas
-    escalaX = (float)scWidth/(float)imWidth;
-    escalaY = (float)scHeight/(float)imHeight;
+    // mitad de visor kinect y de screen
+    imWidthMitad = (int)imWidth/2;
+    scWidthMitad = (int)scWidth/2;
+    imHeightMitad = (int)imHeight/2;
+    scHeightMitad = (int)scHeight/2;
+    
+    // pseudo re escalado
+    pseudoScWidthMitad = (double)scWidthMitad*RESCALE;
+    pseudoScHeightMitad = (double)scHeightMitad*RESCALE;
     
     System.out.println("Dimensiones de pantalla: (" + scWidth + ", " + scHeight + ")");
     
@@ -1153,8 +1196,8 @@ public class JPanelDesktopKinect extends JPanel implements Runnable
       // xbmc
       case 3:
       
-	flag_global_click_activo = true;
-	flag_global_mousedown_activo = false;
+	flag_global_click_activo = false;
+	flag_global_mousedown_activo = true;
 	break;
 	
       // libre office (presentacion)
